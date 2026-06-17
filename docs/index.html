@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>НРИ-Помощник</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="brand-mark">d20</div>
+          <div>
+            <h1>НРИ-Помощник</h1>
+            <p>Библиотека персонажей и поле боя</p>
+          </div>
+        </div>
+
+        <nav class="tabs" aria-label="Разделы приложения">
+          <button class="tab-button active" data-tab="library">Библиотека</button>
+          <button class="tab-button" data-tab="battlefield">Поле боя</button>
+          <button class="tab-button" data-tab="battlemap">Карта боя</button>
+          <button class="tab-button" data-tab="online">Онлайн</button>
+          <button class="tab-button" data-tab="help">Справка</button>
+        </nav>
+
+        <section class="side-panel">
+          <h2>Импорт и экспорт</h2>
+          <div class="stack">
+            <button class="primary" id="export-library">Экспорт библиотеки</button>
+            <button class="ghost" id="export-battle">Экспорт боя</button>
+            <label class="file-button">
+              Импорт библиотеки
+              <input id="import-library" type="file" accept="application/json" />
+            </label>
+            <label class="file-button">
+              Импорт боя
+              <input id="import-battle" type="file" accept="application/json" />
+            </label>
+          </div>
+        </section>
+      </aside>
+
+      <main>
+        <section class="view active" id="library-view">
+          <header class="view-header">
+            <div>
+              <h2>Библиотека персонажей</h2>
+              <p>Создание и хранение листов персонажей для дальнейшего добавления на поле боя.</p>
+            </div>
+            <button class="primary" id="new-character">Создать новый шаблон</button>
+          </header>
+
+          <div class="library-layout">
+            <section class="panel">
+              <h3>Шаблон персонажа</h3>
+              <form id="character-form">
+                <input type="hidden" id="character-id" />
+                <div class="form-grid">
+                  <label>
+                    Имя / идентификатор
+                    <input id="character-name" required />
+                  </label>
+                  <label>
+                    Хиты
+                    <input id="character-hp" type="number" min="1" value="20" />
+                  </label>
+                  <label>
+                    Класс доспехов
+                    <input id="character-ac" type="number" min="1" value="12" />
+                  </label>
+                  <label>
+                    Бонус мастерства
+                    <input id="character-prof" type="number" value="2" />
+                  </label>
+                </div>
+
+                <h4>Характеристики</h4>
+                <div class="attributes" id="attribute-inputs"></div>
+
+                <h4>Навыки</h4>
+                <textarea id="character-skills" rows="3" placeholder="Акробатика +4, Внимательность +3..."></textarea>
+
+                <h4>Умения, способности и атаки</h4>
+                <div id="abilities-editor" class="abilities-editor"></div>
+                <button type="button" class="ghost" id="add-ability">Добавить умение</button>
+
+                <div class="form-actions">
+                  <button class="primary" type="submit">Сохранить в библиотеку</button>
+                  <button class="ghost" type="button" id="reset-form">Очистить форму</button>
+                </div>
+              </form>
+            </section>
+
+            <section class="panel">
+              <div class="panel-head">
+                <h3>Листы персонажей</h3>
+                <button class="ghost compact-button" id="sort-library-alpha" type="button">А-Я</button>
+              </div>
+              <div class="character-list" id="character-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="battlefield-view">
+          <header class="view-header">
+            <div>
+              <h2>Поле боя</h2>
+              <p>Две команды, ручное редактирование параметров, ходы, броски атаки и урона.</p>
+            </div>
+            <div class="round-box">
+              <span>Раунд</span>
+              <strong id="round-number">1</strong>
+              <button class="ghost" id="next-round">Следующий</button>
+            </div>
+          </header>
+
+          <section class="setup-panel">
+            <div>
+              <label>
+                Добавить в команду 1
+                <select id="team-a-select"></select>
+              </label>
+              <button class="primary" id="add-team-a">Добавить</button>
+            </div>
+            <div>
+              <label>
+                Добавить в команду 2
+                <select id="team-b-select"></select>
+              </label>
+              <button class="primary" id="add-team-b">Добавить</button>
+            </div>
+            <button class="ghost" id="reroll-initiative">Рассчитать инициативу</button>
+            <button class="danger" id="clear-battle">Очистить бой</button>
+          </section>
+
+          <div class="battle-layout">
+            <section class="team-column">
+              <div class="panel-head">
+                <h3>Команда 1</h3>
+                <button class="ghost compact-button" id="sort-team-a-alpha" type="button">А-Я</button>
+              </div>
+              <div class="combatants" id="team-a"></div>
+            </section>
+            <section class="team-column">
+              <div class="panel-head">
+                <h3>Команда 2</h3>
+                <button class="ghost compact-button" id="sort-team-b-alpha" type="button">А-Я</button>
+              </div>
+              <div class="combatants" id="team-b"></div>
+            </section>
+          </div>
+
+          <section class="panel action-panel">
+            <h3>Совершение хода</h3>
+            <div class="action-grid">
+              <label>
+                Действующий персонаж
+                <select id="actor-select"></select>
+              </label>
+              <label>
+                Цель взаимодействия
+                <select id="target-select"></select>
+              </label>
+              <label>
+                Умение / атака
+                <select id="ability-select"></select>
+              </label>
+            </div>
+
+            <div class="roll-grid">
+              <label>
+                Режим броска атаки
+                <select id="attack-mode">
+                  <option value="auto">Автоматически</option>
+                  <option value="manual">Ввести вручную</option>
+                </select>
+              </label>
+              <label>
+                Значение атаки
+                <input id="manual-attack" type="number" placeholder="d20 + бонус" />
+              </label>
+              <label>
+                Режим урона / лечения
+                <select id="effect-mode">
+                  <option value="auto">Автоматически</option>
+                  <option value="manual">Ввести вручную</option>
+                </select>
+              </label>
+              <label>
+                Значение эффекта
+                <input id="manual-effect" type="number" placeholder="урон или лечение" />
+              </label>
+            </div>
+
+            <div class="result-line" id="action-preview">Выберите персонажа, цель и умение.</div>
+            <div class="form-actions">
+              <button class="primary" id="perform-action">Совершить действие</button>
+              <button class="ghost" id="undo-action">Отмотать действие</button>
+            </div>
+          </section>
+
+          <section class="panel">
+            <h3>Логи боя</h3>
+            <ol class="battle-log" id="battle-log"></ol>
+          </section>
+        </section>
+
+        <section class="view" id="battlemap-view">
+          <header class="view-header">
+            <div>
+              <h2>Карта боя</h2>
+              <p>Отдельная карта текущего боя с настраиваемой сеткой, фоном и токенами участников.</p>
+            </div>
+          </header>
+
+          <section class="panel battle-map-panel">
+            <div class="map-head">
+              <h3>Настройки карты</h3>
+              <span id="map-image-status" class="badge">Фон не выбран</span>
+            </div>
+            <div class="map-controls">
+              <label>
+                Клеток по ширине
+                <input id="map-width" type="number" min="1" max="175" value="14" />
+              </label>
+              <label>
+                Клеток по высоте
+                <input id="map-height" type="number" min="1" max="131" value="10" />
+              </label>
+              <button class="primary" id="apply-map-settings" type="button">Применить</button>
+              <label class="file-button map-file-button">
+                Загрузить фон
+                <input id="map-image-input" type="file" accept="image/png,image/jpeg,image/webp" />
+              </label>
+              <button class="ghost" id="remove-map-image" type="button">Убрать фон</button>
+            </div>
+            <div class="map-zoom-controls">
+              <button class="ghost" id="map-zoom-out" type="button">−</button>
+              <label>
+                Масштаб карты
+                <input id="map-zoom-range" type="range" min="50" max="300" step="25" value="100" />
+              </label>
+              <button class="ghost" id="map-zoom-in" type="button">+</button>
+              <button class="ghost" id="map-zoom-reset" type="button">100%</button>
+              <span class="zoom-value" id="map-zoom-value">100%</span>
+            </div>
+          </section>
+
+          <section class="panel map-board-panel">
+            <div class="map-layout">
+              <div class="map-stage">
+                <div class="battle-map-viewport">
+                  <div class="battle-map-board" id="battle-map-board" aria-label="Карта боя с токенами участников"></div>
+                </div>
+                <div class="result-line" id="map-status">Карта зависит от состава команд во вкладке «Поле боя».</div>
+              </div>
+              <aside class="map-roster" id="battle-map-roster" aria-label="Участники боя на карте"></aside>
+            </div>
+          </section>
+
+          <section class="panel map-log-panel collapsed" id="map-log-panel">
+            <div class="collapsible-head">
+              <div>
+                <h3>Логи боя</h3>
+                <p id="map-log-summary">Лог боя пока пуст.</p>
+              </div>
+              <button class="ghost" id="toggle-map-log" type="button">Развернуть</button>
+            </div>
+            <ol class="battle-log map-battle-log" id="map-battle-log"></ol>
+          </section>
+
+          <div class="dialog-backdrop hidden" id="map-action-dialog" role="dialog" aria-modal="true" aria-labelledby="map-action-title">
+            <section class="dialog">
+              <div class="dialog-head">
+                <div>
+                  <h3 id="map-action-title">Действие на карте</h3>
+                  <p id="map-action-subtitle">Выберите умение активного персонажа.</p>
+                </div>
+                <button class="ghost" id="close-map-action" type="button">Закрыть</button>
+              </div>
+
+              <div class="action-grid">
+                <label>
+                  Умение / атака
+                  <select id="map-ability-select"></select>
+                </label>
+                <label>
+                  Режим броска атаки
+                  <select id="map-attack-mode">
+                    <option value="auto">Автоматически</option>
+                    <option value="manual">Ввести вручную</option>
+                  </select>
+                </label>
+                <label>
+                  Значение атаки
+                  <input id="map-manual-attack" type="number" placeholder="d20 + бонус" />
+                </label>
+              </div>
+
+              <div class="roll-grid">
+                <label>
+                  Режим урона / лечения
+                  <select id="map-effect-mode">
+                    <option value="auto">Автоматически</option>
+                    <option value="manual">Ввести вручную</option>
+                  </select>
+                </label>
+                <label>
+                  Значение эффекта
+                  <input id="map-manual-effect" type="number" placeholder="урон или лечение" />
+                </label>
+              </div>
+
+              <div class="result-line" id="map-action-preview">Для действия нужен активный токен, цель и умение.</div>
+              <div class="form-actions">
+                <button class="primary" id="map-perform-action" type="button">Совершить действие</button>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="online-view">
+          <header class="view-header">
+            <div>
+              <h2>Онлайн</h2>
+              <p>Комната боя для просмотра карты и перемещения токенов через интернет.</p>
+            </div>
+          </header>
+
+          <div class="online-layout">
+            <section class="panel">
+              <h3>Подключение к комнате</h3>
+              <div class="online-form">
+                <label>
+                  Адрес Firebase Realtime Database
+                  <input id="online-db-url" placeholder="https://project-default-rtdb.europe-west1.firebasedatabase.app" />
+                </label>
+                <label>
+                  Код комнаты
+                  <input id="online-room-code" maxlength="40" placeholder="ROOM-ABC123" />
+                </label>
+                <button class="ghost" id="generate-room-code" type="button">Создать код</button>
+                <label>
+                  Роль
+                  <select id="online-role">
+                    <option value="gm">Гейммастер</option>
+                    <option value="player">Игрок</option>
+                  </select>
+                </label>
+                <label>
+                  Токен игрока
+                  <select id="online-token-select"></select>
+                </label>
+              </div>
+
+              <div class="form-actions">
+                <button class="primary" id="connect-online" type="button">Подключиться</button>
+                <button class="ghost" id="publish-online" type="button">Опубликовать бой</button>
+                <button class="ghost" id="pull-online" type="button">Обновить из комнаты</button>
+                <button class="danger" id="disconnect-online" type="button">Отключиться</button>
+              </div>
+
+              <div class="online-status" id="online-status">Онлайн-режим выключен.</div>
+              <div class="online-room-path" id="online-room-path">Комната не настроена.</div>
+
+              <label class="share-link">
+                Ссылка для игроков
+                <input id="online-share-link" readonly placeholder="Появится после ввода кода комнаты" />
+              </label>
+            </section>
+
+            <section class="panel help-card">
+              <h3>Как использовать</h3>
+              <dl>
+                <dt>Гейммастер</dt>
+                <dd>Собирает бой, настраивает карту, указывает адрес Firebase и код комнаты, затем подключается и публикует состояние боя.</dd>
+                <dt>Игрок</dt>
+                <dd>Открывает опубликованную web-страницу с телефона, вводит тот же адрес Firebase и код комнаты, выбирает свой токен и двигает его на карте.</dd>
+                <dt>Ограничения</dt>
+                <dd>Онлайн-режим рассчитан на демонстрацию и небольшую игровую группу. Для публичного сервиса потребуются учетные записи игроков и более строгие правила доступа.</dd>
+              </dl>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="help-view">
+          <header class="view-header">
+            <div>
+              <h2>Справка</h2>
+              <p>Краткое описание функций и основных обозначений.</p>
+            </div>
+          </header>
+
+          <div class="help-layout">
+            <section class="panel help-card">
+              <h3>Разделы приложения</h3>
+              <dl>
+                <dt>Библиотека</dt>
+                <dd>Создание, редактирование, импорт и экспорт листов персонажей.</dd>
+                <dt>Поле боя</dt>
+                <dd>Сбор двух команд, расчет инициативы по Ловкости, указание очередности хода, проведение раундов, атаки, лечение, экспорт состояния боя и журнал боя.</dd>
+                <dt>Карта боя</dt>
+                <dd>Отдельная вкладка с настраиваемой клеточной сеткой, фоном карты и токенами участников текущего боя. Токен можно выбрать, поставить на карту, переместить кликом или перетаскиванием, а при выборе другого токена открыть окно действия.</dd>
+                <dt>Онлайн</dt>
+                <dd>Подключение к комнате боя через Firebase Realtime Database. Гейммастер публикует бой, игроки с телефонов получают карту и двигают назначенные им токены.</dd>
+                <dt>Справка</dt>
+                <dd>Описание интерфейса и используемых игровых обозначений.</dd>
+              </dl>
+            </section>
+
+            <section class="panel help-card">
+              <h3>Лист персонажа</h3>
+              <dl>
+                <dt>Хиты</dt>
+                <dd>Текущее здоровье персонажа. При уроне уменьшаются, при лечении восстанавливаются.</dd>
+                <dt>КД</dt>
+                <dd>Класс доспехов. Если бросок атаки равен КД цели или выше, атака проходит.</dd>
+                <dt>Очередь</dt>
+                <dd>Позиция персонажа в порядке ходов. При расчете инициативы заполняется автоматически, но может быть изменена вручную.</dd>
+                <dt>Инициатива</dt>
+                <dd>Бросок d20 с модификатором Ловкости. Чем выше результат, тем раньше персонаж действует в раунде.</dd>
+                <dt>Бонус мастерства</dt>
+                <dd>Общий бонус персонажа, который можно учитывать при настройке атак и навыков.</dd>
+                <dt>Умения</dt>
+                <dd>Атаки, способности и лечение. Для них задаются бонус атаки и формула эффекта.</dd>
+              </dl>
+            </section>
+
+            <section class="panel help-card">
+              <h3>Характеристики</h3>
+              <dl>
+                <dt>Сила</dt>
+                <dd>Физическая мощь, ближний бой, перенос тяжестей.</dd>
+                <dt>Ловкость</dt>
+                <dd>Реакция, точность, скрытность, уклонение.</dd>
+                <dt>Телосложение</dt>
+                <dd>Выносливость и запас здоровья.</dd>
+                <dt>Интеллект</dt>
+                <dd>Знания, анализ, магические расчеты.</dd>
+                <dt>Мудрость</dt>
+                <dd>Внимательность, интуиция, восприятие.</dd>
+                <dt>Харизма</dt>
+                <dd>Убеждение, влияние, социальные действия.</dd>
+              </dl>
+            </section>
+
+            <section class="panel help-card">
+              <h3>Броски</h3>
+              <dl>
+                <dt>d20</dt>
+                <dd>Основной куб для проверки атаки. Результат сравнивается с КД цели.</dd>
+                <dt>Формула урона</dt>
+                <dd>Записывается в виде 1d8+3, 2d6, 1d4-1 или обычного числа. Слишком большие значения не сохраняются.</dd>
+                <dt>Автоматический режим</dt>
+                <dd>Приложение само бросает кубы и прибавляет указанные бонусы.</dd>
+                <dt>Ручной режим</dt>
+                <dd>Значение броска можно ввести самому.</dd>
+              </dl>
+            </section>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
